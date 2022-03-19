@@ -1,7 +1,8 @@
 # cryptoHacking
 
-## Ethereum Smart Contract Script
+## Ethereum Smart Contract Scripts
 
+1. ### WithdrawalBrawl ###
 - Crawl blockchain and find contracts with a balance.
-- Try to with drawl funds.
+- Try to withdrawal funds.
 - Repeat
