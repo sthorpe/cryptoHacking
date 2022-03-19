@@ -1,4 +1,8 @@
 # cryptoHacking
+<div>
+<img src="https://media.giphy.com/media/lp3GUtG2waC88/giphy.gif" alt="hacking"/>
+  
+</div>
 
 ## Ethereum Smart Contract Scripts
 
