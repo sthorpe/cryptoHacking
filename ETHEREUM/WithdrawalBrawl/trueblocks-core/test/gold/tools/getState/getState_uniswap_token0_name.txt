@@ -1,0 +1,24 @@
+chifra state  --call 0x2260fac5e5542a773aa44fbcfedf7c193bc2c599!0x06fdde03 10092000 --fmt txt
+TEST[DATE|TIME] Blocks:  [10092000]
+TEST[DATE|TIME] Call:  0x2260fac5e5542a773aa44fbcfedf7c193bc2c599!0x06fdde03
+TEST[DATE|TIME] Format:  txt
+blockNumber	address	signature	encoding	bytes	compressedResult
+
+level: 1
+readOffset: 0
+objectStart: 0
+params.size: 1
+  0: string _name = <>
+dataArray.size: 3
+  0 (0x000) 0000000000000000...00000000000000000000000000000020 <=o <-r
+  1 (0x020) 0000000000000000...0000000000000000000000000000000b
+  2 (0x040) 5772617070656420...00000000000000000000000000000000
+
+==================================================
+params.size: 1
+  0: string _name = Wrapped BTC
+params.size: 1
+  0: string _name = Wrapped BTC
+==================================================
+
+10092000	0x2260fac5e5542a773aa44fbcfedf7c193bc2c599	name()	0x06fdde03		Wrapped BTC

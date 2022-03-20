@@ -1,0 +1,67 @@
+makeClass  --dump -a
+TIME ~ CLOCK - <INFO>  : Processing 3 class definition files.
+------------------------------------------------------------------------------------------------------------------------
+./classDefinitions/block.txt
+------------------------------------------------------------------------------------------------------------------------
+[version]
+current = "vers-alpha"
+
+[settings]
+class = "CBlock"
+fields = "uint32 gasLimit|uint32 gasUsed|hash hash|bloom logsBloom|uint32 blockNumber|hash parentHash|uint32 timestamp|CTransactionArray transactions"
+includes = "ethtypes.h|etherlib.h|transaction.h"
+cIncs = "#include \"etherlib.h"
+scope = "extern"
+serialize = true
+; = ""
+; full block definition from around Jan 2017 = ""
+;;address author = ""
+;;string difficulty = ""
+;;string extraData = ""
+;;string gasLimit = ""
+;;string gasUsed = ""
+;;hash hash = ""
+;;tring logsBloom = ""
+;;address miner = ""
+;;hash mixHash = ""
+;;string nonce = ""
+;;string number = ""
+;;hash parentHash = ""
+;;string receiptRoot = ""
+;;string receiptsRoot = ""
+;;SFStringArray sealFields; = ""
+;;string sha3Uncles = ""
+;;string size = ""
+;;string stateRoot = ""
+;;string timestamp = ""
+;;string totalDifficulty = ""
+;;CTransactionArray transactions = ""
+;;string transactionsRoot = ""
+;;SFStringArray uncles = ""
+
+------------------------------------------------------------------------------------------------------------------------
+./classDefinitions/function.txt
+------------------------------------------------------------------------------------------------------------------------
+[version]
+current = "vers-alpha"
+
+[settings]
+class = "CFunction"
+fields = "string name|string type|bool anonymous|bool constant|bool payable|string signature|string encoding|CParameterArray inputs|CParameterArray outputs"
+includes = "utillib.h|parameter.h"
+
+------------------------------------------------------------------------------------------------------------------------
+./classDefinitions/status.txt
+------------------------------------------------------------------------------------------------------------------------
+[version]
+current = "vers-alpha"
+
+[settings]
+class = "CStatus"
+fields = "string clientVersion|string trueblocksVersion|string rpcProvider|string apiProvider|string host|sbool isScraping|CCachePtrArray caches"
+includes = "etherlib.h|cache.h"
+serialize = true
+enabled = false
+
+TIME ~ CLOCK - <INFO>  : handling generate...
+TIME ~ CLOCK - <INFO>  : makeClass --run processed 3 files (changed 6).                                        

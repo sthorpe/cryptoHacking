@@ -1,0 +1,6 @@
+logs?transactions=.clink
+{
+  "errors": [
+    "chifra logs - .clink does not appear to be a valid transaction index."
+  ]
+}

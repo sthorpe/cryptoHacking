@@ -1,0 +1,10 @@
+blocks?blocks=3982128&uniq&count&fmt=json
+{
+  "data": [
+    {
+      "blockNumber": 3982128,
+      "transactionsCnt": 91,
+      "uniq": 253
+    }
+  ]
+}

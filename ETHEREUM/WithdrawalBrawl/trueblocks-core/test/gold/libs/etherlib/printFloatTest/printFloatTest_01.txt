@@ -1,0 +1,4 @@
+printFloatTest   -t 1
+{
+  "close": 1.40000
+}

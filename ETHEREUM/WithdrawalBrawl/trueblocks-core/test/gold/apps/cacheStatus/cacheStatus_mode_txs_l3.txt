@@ -1,0 +1,34 @@
+chifra status  caches --types txs --details --depth 3
+TEST[DATE|TIME] Modes:  [caches]
+TEST[DATE|TIME] Details:  true
+TEST[DATE|TIME] Types:  [txs]
+TEST[DATE|TIME] Depth:  3
+{
+  "clientVersion": "Client version",
+  "clientIds": "chainId: 1 networkId: 1",
+  "trueblocksVersion": "GHC-TrueBlocks//vers-alpha--git-hash---git-ts-",
+  "rpcProvider": "--providers--",
+  "configPath": "--paths--",
+  "cachePath": "--paths--",
+  "indexPath": "--paths--",
+  "host": "--hostname-- (--username--)",
+  "isTesting": true,
+  "isArchive": true,
+  "isTracing": true,
+  "hasEskey": true,
+  "caches": [
+    {
+      "items": [
+        "Testing/00/00/00/file1.bin",
+        "Testing/00/01/00/file2.bin"
+      ],
+      "type": "CChainCache",
+      "path": "txsPath",
+      "nFiles": 0,
+      "nFolders": 0,
+      "sizeInBytes": 0,
+      "isValid": true
+    }
+  ],
+  "date": "--date--"
+}

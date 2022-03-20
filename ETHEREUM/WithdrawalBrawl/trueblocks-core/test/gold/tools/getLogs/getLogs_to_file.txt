@@ -1,0 +1,2 @@
+chifra logs  2222222.0 2332332.0 --fmt json --to_file
+{ "outputFilename": "--output_filename--" }

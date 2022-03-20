@@ -1,0 +1,3 @@
+displayStrsTest  CInfix
+------------------------------CInfix------------------------------
+Unknown node of type CInfix not created.

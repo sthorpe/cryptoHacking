@@ -1,0 +1,4 @@
+[settings]
+class = CMonitorCount
+fields = monitorcount.csv
+includes = etherlib.h

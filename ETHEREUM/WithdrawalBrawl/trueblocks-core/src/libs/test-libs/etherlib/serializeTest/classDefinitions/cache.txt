@@ -1,0 +1,4 @@
+[settings]
+class = CCache
+fields = cache.csv
+includes = etherlib.h

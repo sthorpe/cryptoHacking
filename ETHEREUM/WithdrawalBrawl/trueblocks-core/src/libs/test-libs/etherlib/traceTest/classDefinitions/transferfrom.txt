@@ -1,0 +1,5 @@
+[settings]
+class = QTransferFrom
+base_class = CTransaction
+fields = transferfrom.csv
+includes = etherlib.h|transaction.h

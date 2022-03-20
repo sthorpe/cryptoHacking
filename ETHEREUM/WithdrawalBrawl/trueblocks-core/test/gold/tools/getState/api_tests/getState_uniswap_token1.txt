@@ -1,0 +1,27 @@
+state?call=0xbb2b8038a1640196fbe3e38816f3e67cba72d940!0xd21220a7&blocks=10092000
+{
+  "data": [
+    {
+      "blockNumber": 10092000,
+      "address": "0xbb2b8038a1640196fbe3e38816f3e67cba72d940",
+      "encoding": "0xd21220a7",
+      "bytes": "",
+      "callResult": {
+        "name": "token1",
+        "signature": "token1()",
+        "encoding": "0xd21220a7",
+        "outputs": {
+          "val_0": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      "compressedResult": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+    }
+  ],
+  "meta": {
+    "unripe": "0xdeadbeef",
+    "ripe": "0xdeadbeef",
+    "staging": "0xdeadbeef",
+    "finalized": "0xdeadbeef",
+    "client": "0xdeadbeef"
+  }
+}

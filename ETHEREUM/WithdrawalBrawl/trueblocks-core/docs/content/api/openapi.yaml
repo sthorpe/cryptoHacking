@@ -1,0 +1,2960 @@
+openapi: 3.0.3
+info:
+  title: TrueBlocks API
+  contact:
+    email: info@trueblocks.io
+    url: https://www.trueblocks.io
+  license:
+    name: GPL 3.0
+    url: http://www.gnu.org/licenses/
+  version: 0.25.0-alpha
+  description: >
+
+    A REST layer over the TrueBlocks application. With `chifra serve`, you can
+    run this on your own machine, and make calls to `localhost`.
+
+    ## How to use this API
+
+    This API's endpoints are exact translations of the commands used by the chifra
+    CLI application, and the query parameters mirror the commands' options and
+    flags. If you want details, [the commands have their own documentation page](/docs/using/introducing-chifra/).
+
+    For detailed descriptions of fields, see [the data model reference](/data-model/intro/).
+
+      ### Before you begin
+
+    1. [Install the trueblocks-core application](/docs/install/install-trueblocks/)
+      on your machine, change your configs as needed.
+    2. Run `chifra serve`
+
+
+      ### Example queries
+
+     By default, all calls are to `localhost:8080`.
+     All options and flags are passed through query parameters.
+
+     For example, to get block `100`, make a call to `/blocks` and specify
+     the block you want in the query parameter:
+
+     ```shell
+     curl "http://localhost:8080/blocks?blocks=100"
+     ```
+
+     Some parameters support ranges:
+
+     ```shell
+     curl "http://localhost:8080/blocks?blocks=100-120"
+     ```
+
+     Other parameters let you filter your responses. For example, to get only
+     the unique addresses from that block range:
+
+     ```shell
+     curl "http://localhost:8080/blocks?blocks=100-110&uniq=true"
+     ```
+
+     You might want to cache queries on your local machine.
+
+     ```shell
+     "http://localhost:8080/blocks?blocks=100-110&cache=true"
+     ```
+
+     Cacheing speeds up repeat queries significantly. The cache options are
+     particularly useful for calls to data-rich endpoints, like most endpoints
+     in the  "Accounts" collection.
+
+     Of course, caches occupy local storage. So cache wisely.
+servers:
+  - url: http://localhost:8080
+    description: Local endpoints
+tags:
+  - name: Accounts
+    description: Access and cache transactional data
+  - name: Chain Data
+    description: Access and cache blockchain-related data
+  - name: Chain State
+    description: Access to account and token state
+  - name: Admin
+    description: Control the scraper and build the index
+  - name: Other
+    description: Access to other and external data
+paths:
+  /list:
+    get:
+      tags:
+        - Accounts
+      summary: List transactions
+      description: List every appearance of an address anywhere on the chain.
+      operationId: accounts-list
+      parameters:
+        - name: addrs
+          description: one or more addresses (0x...) to list
+          required: true
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: address
+        - name: count
+          description: present only the number of records
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: appearances
+          description: export a list of appearances
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: a single appearance of an address anywhere in the chain in the form of blockNumber.transactionIndex
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: "#/components/schemas/appearance"
+                        - $ref: "#/components/schemas/listStats"
+                example:
+                  {
+                    "data": [
+                      {
+                        "blockNumber": 8854723,
+                        "transactionIndex": 61,
+                        "address": "0xf503017d7baf7fbc0fff7492b751025c6a78179b",
+                        "name": "TrueBlocks 2020 Wallet 0xf503"
+                      },
+                      {
+                        "blockNumber": 8855603,
+                        "transactionIndex": 121,
+                        "address": "0xf503017d7baf7fbc0fff7492b751025c6a78179b",
+                        "name": "TrueBlocks 2020 Wallet 0xf503"
+                      },
+                      {
+                        "...": "..."
+                      }
+                    ]
+                  }
+        "400":
+          description: bad input parameter
+  /export:
+    get:
+      tags:
+        - Accounts
+      summary: Export details
+      description: Export full detail of transactions for one or more addresses.
+      operationId: accounts-export
+      parameters:
+        - name: addrs
+          description: one or more addresses (0x...) to export
+          required: true
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: address
+        - name: topics
+          description: filter by one or more log topics (only for --logs option)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: topic
+        - name: fourbytes
+          description: filter by one or more fourbytes (only for transactions and trace options)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: fourbyte
+        - name: appearances
+          description: export a list of appearances
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: receipts
+          description: export receipts instead of transactional data
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: logs
+          description: export logs instead of transactional data
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: traces
+          description: export traces instead of transactional data
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: statements
+          description: >
+            export reconciliations instead of transactional data (requires --accounting option)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: neighbors
+          description: export the neighbors of the given address
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: accounting
+          description: >
+            attach accounting records to the exported data (applies to transactions export only)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: articulate
+          description: articulate transactions, traces, logs, and outputs
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: cache
+          description: write transactions to the cache (see notes)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: cacheTraces
+          description: write traces to the cache (see notes)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: count
+          description: >
+            only available for --appearances mode, if present, return only the number of records
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: firstRecord
+          description: the first record to process
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: number
+        - name: maxRecords
+          description: the maximum number of records to process before reporting
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: number
+        - name: relevant
+          description: >
+            for log and accounting export only, export only logs relevant to one of the given export addresses
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: emitter
+          description: >
+            for log export only, export only logs if emitted by one of these address(es)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: address
+        - name: topic
+          description: for log export only, export only logs with this topic(s)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: topic
+        - name: asset
+          description: for the statements option only, export only reconciliations for this asset
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: address
+        - name: clean
+          description: clean (i.e. remove duplicate appearances) from all existing monitors
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: staging
+          description: >
+            export transactions labeled staging (i.e. older than 28 blocks but not yet consolidated)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: unripe
+          description: export transactions labeled upripe (i.e. less than 28 blocks old)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: firstBlock
+          description: first block to process (inclusive)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: number
+        - name: lastBlock
+          description: last block to process (inclusive)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: a single appearance of an address anywhere in the chain in the form of blockNumber.transactionIndex
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: "#/components/schemas/appearance"
+                        - $ref: "#/components/schemas/reconciliation"
+                        - $ref: "#/components/schemas/transaction"
+                        - $ref: "#/components/schemas/receipt"
+                        - $ref: "#/components/schemas/log"
+                        - $ref: "#/components/schemas/trace"
+                example:
+                  {
+                    "data":
+                      [
+                        {
+                          "hash": "0x1a898c5448b37f693343917ea40b7ad1c43b28a4ddd37af1bd6d0bb4a0c99891",
+                          "blockHash": "0x1d7f60b34bad8ce0ba5e49e3845c7a62ba8db440b81f8df98ec6349c4d28ca8e",
+                          "blockNumber": 8854723,
+                          "transactionIndex": 61,
+                          "timestamp": 1572639538,
+                          "from": "0xbb984f85bd52d78eb2fbf2c5598bae7abb98c5bc",
+                          "to": "0xf503017d7baf7fbc0fff7492b751025c6a78179b",
+                          "value": 5e+18,
+                          "gas": 21000,
+                          "gasPrice": 10000000000,
+                          "maxFeePerGas": 0,
+                          "maxPriorityFeePerGas": 0,
+                          "isError": 0,
+                          "hasToken": 0,
+                          "receipt":
+                            {
+                              "contractAddress": "0x0",
+                              "gasUsed": 21000,
+                              "effectiveGasPrice": 10000000000,
+                              "status": 1,
+                            },
+                          "compressedTx": "0x ( )",
+                          "gasCost": 210000000000000,
+                          "gasUsed": 21000,
+                          "date": "2019-11-01 20:18:58 UTC",
+                          "ether": 5,
+                        },
+                      ],
+                  }
+        "400":
+          description: bad input parameter
+  /monitors:
+    get:
+      tags:
+        - Accounts
+      summary: Manage Monitors
+      description: Add, remove, clean, and list address monitors.
+      operationId: accounts-monitors
+      parameters:
+        - name: addrs
+          description: one or more addresses (0x...) to process
+          required: true
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: address
+        - name: appearances
+          description: export a list of appearances
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: count
+          description: present only the number of records
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: clean
+          description: clean (i.e. remove duplicate appearances) from monitors
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: A local file indicating a user's interest in an address. Includes caches for reconicilations, transactions and appearances as well as an optional association to named account
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/monitor"
+        "400":
+          description: bad input parameter
+    delete:
+      summary: Delete, undelete, or remove a monitor
+      operationId: accounts-monitors
+      parameters:
+        - name: addrs
+          description: one or more addresses (0x...) to process
+          required: true
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: address
+        - name: delete
+          description: delete a monitor, but do not remove it
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: undelete
+          description: undelete a previously deleted monitor
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: remove
+          description: remove a previously deleted monitor
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Deleted
+        "404":
+          description: id not found
+  /names:
+    get:
+      tags:
+        - Accounts
+      summary: Names
+      description: Query addresses or names of well known accounts.
+      operationId: accounts-names
+      parameters:
+        - name: terms
+          description: a space separated list of one or more search terms
+          required: true
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: string
+        - name: expand
+          description: >
+            expand search to include all fields (search name, address, and symbol otherwise)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: matchCase
+          description: do case-sensitive search
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: all
+          description: include all accounts in the search
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: custom
+          description: include your custom named accounts
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: prefund
+          description: include prefund accounts
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: named
+          description: include well know token and airdrop addresses in the search
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: addr
+          description: display only addresses in the results (useful for scripting)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: collections
+          description: display collections data
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: tags
+          description: export the list of tags and subtags only
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: an association between a name and address for use throughout TrueBlocks
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/name"
+                example:
+                  [
+                    {
+                      "tags": "50-Tokens:ERC20",
+                      "address": "0xfe5f141bf94fe84bc28ded0ab966c16b17490657",
+                      "name": "LibraToken",
+                      "symbol": "LBA",
+                      "source": "On chain",
+                      "decimals": 18,
+                      "description": "Decentralized lending infrastructure facilitating open access to credit networks on Ethereum.",
+                    },
+                  ]
+        "400":
+          description: bad input parameter
+    delete:
+      summary: Delete, undelete, or remove a monitor
+      operationId: accounts-monitors
+      parameters:
+        - name: addrs
+          description: one or more addresses (0x...) to process
+          required: true
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: address
+        - name: delete
+          description: delete a monitor, but do not remove it
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: undelete
+          description: undelete a previously deleted monitor
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: remove
+          description: remove a previously deleted monitor
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Deleted
+        "404":
+          description: id not found
+  /abis:
+    get:
+      tags:
+        - Accounts
+      summary: ABIs
+      description: Fetches the ABI for a smart contract.
+      operationId: accounts-abis
+      parameters:
+        - name: addrs
+          description: a list of one or more smart contracts whose ABIs to display
+          required: true
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: address
+        - name: known
+          description: load common 'known' ABIs from cache
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: sol
+          description: extract the abi definition from the provided .sol file(s)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: find
+          description: search for function or event declarations given a four- or 32-byte code(s)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: string
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: a collection of function and event definitions as described elsewhere in the Ethereum system
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/function"
+                example:
+                  {
+                    "data": [
+                      {
+                        "name": "PairCreated",
+                        "type": "event",
+                        "stateMutability": "nonpayable",
+                        "signature": "PairCreated(address,address,address,uint256)",
+                        "encoding": "0x0d3648bd0f6ba80134a33ba9275ac585d9d315f0ad8355cddefde31afa28d0e9",
+                        "inputs": [
+                          {
+                            "type": "address",
+                            "name": "token0",
+                            "indexed": true,
+                            "internalType": "address"
+                          },
+                          {
+                            "type": "address",
+                            "name": "token1",
+                            "indexed": true,
+                            "internalType": "address"
+                          },
+                          {
+                            "type": "address",
+                            "name": "pair",
+                            "internalType": "address"
+                          },
+                          {
+                            "type": "uint256",
+                            "name": "val0",
+                            "internalType": "uint256"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+        "400":
+          description: bad input parameter
+  /blocks:
+    get:
+      tags:
+        - Chain Data
+      summary: Get blocks
+      description: Retrieve one or more blocks from the chain or local cache.
+      operationId: chaindata-blocks
+      parameters:
+        - name: blocks
+          description: a space-separated list of one or more block identifiers
+          required: true
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: blknum
+        - name: hashes
+          description: >
+            display only transaction hashes, default is to display full transaction detail
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: uncles
+          description: display uncle blocks (if any) instead of the requested block
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: trace
+          description: export the traces from the block as opposed to the block data
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: apps
+          description: display a list of uniq address appearances in the block
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: uniq
+          description: display a list of uniq address appearances per transaction
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: logs
+          description: display only the logs found in the block(s)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: emitter
+          description: >
+            for the --logs option only, filter logs to show only those logs emitted by the given address(es)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: address
+        - name: topic
+          description: >
+            for the --logs option only, filter logs to show only those with this topic(s)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: topic
+        - name: count
+          description: display the number of the lists of appearances for --addrs or --uniq
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: cache
+          description: force a write of the block to the cache
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: list
+          description: summary list of blocks running backwards from latest block minus num
+          required: false
+          style: form
+          in: query
+          schema:
+            type: string
+            format: blknum
+        - name: listCount
+          description: the number of blocks to report for list option
+          required: false
+          style: form
+          in: query
+          schema:
+            type: string
+            format: blknum
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: block data directly from the blockchain
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/block"
+                example:
+                  {
+                    "blockNumber": 3141592,
+                    "hash": "0x0b4c6fb75ded4b90218cf0346b0885e442878f104e1b60bf75d5b6860eeacd53",
+                    "...": "...",
+                    "transactions": []
+                  }
+        "400":
+          description: bad input parameter
+  /transactions:
+    get:
+      tags:
+        - Chain Data
+      summary: Get transactions
+      description: Retrieve one or more transactions from the chain or local cache.
+      operationId: chaindata-transactions
+      parameters:
+        - name: transactions
+          description: a space-separated list of one or more transaction identifiers
+          required: true
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: tx_id
+        - name: articulate
+          description: articulate the retrieved data if ABIs can be found
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: trace
+          description: include the transaction's traces in the results
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: uniq
+          description: display a list of uniq addresses found in the transaction
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: reconcile
+          description: reconcile the transaction as per the provided address
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: string
+        - name: cache
+          description: >
+            force the results of the query into the tx cache (and the trace cache if applicable)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: the transaction data for a given transaction directly from the blockchain
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/transaction"
+        "400":
+          description: bad input parameter
+  /receipts:
+    get:
+      tags:
+        - Chain Data
+      summary: Get receipts
+      description: Retrieve receipts for the given transaction(s).
+      operationId: chaindata-receipts
+      parameters:
+        - name: transactions
+          description: a space-separated list of one or more transaction identifiers
+          required: true
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: tx_id
+        - name: articulate
+          description: articulate the retrieved data if ABIs can be found
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: receipt data for a given transaction directly from the blockchain
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/receipt"
+        "400":
+          description: bad input parameter
+  /logs:
+    get:
+      tags:
+        - Chain Data
+      summary: Get logs
+      description: Retrieve logs for the given transaction(s).
+      operationId: chaindata-logs
+      parameters:
+        - name: transactions
+          description: a space-separated list of one or more transaction identifiers
+          required: true
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: tx_id
+        - name: articulate
+          description: articulate the retrieved data if ABIs can be found
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: log data for a given transaction directly from the blockchain
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/log"
+        "400":
+          description: bad input parameter
+  /traces:
+    get:
+      tags:
+        - Chain Data
+      summary: Get traces
+      description: Retrieve traces for the given transaction(s).
+      operationId: chaindata-traces
+      parameters:
+        - name: transactions
+          description: a space-separated list of one or more transaction identifiers
+          required: true
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: tx_id
+        - name: articulate
+          description: articulate the retrieved data if ABIs can be found
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: filter
+          description: call the node's trace_filter routine with bang-separated filter
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: string
+        - name: statediff
+          description: export state diff traces (not implemented)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: count
+          description: show the number of traces for the transaction only (fast)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: trace data for a given transaction directly from the blockchain
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/trace"
+        "400":
+          description: bad input parameter
+  /when:
+    get:
+      tags:
+        - Chain Data
+      summary: Get block dates
+      description: Find block(s) based on date, blockNum, timestamp, or 'special'.
+      operationId: chaindata-when
+      parameters:
+        - name: blocks
+          description: a space-separated list of one or more block identifiers
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: blknum
+        - name: timestamps
+          description: ignore other options and generate timestamps only
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: list
+          description: "export a list of the 'special' blocks"
+          required: false
+          style: form
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: An indentified block named for convienience
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/datedBlock"
+        "400":
+          description: bad input parameter
+  /state:
+    get:
+      tags:
+        - Chain State
+      summary: Get balance(s)
+      description: Retrieve account balance(s) for one or more addresses at given block(s).
+      operationId: chainstate-state
+      parameters:
+        - name: addrs
+          description: one or more addresses (0x...) from which to retrieve balances
+          required: true
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: address
+        - name: blocks
+          description: >
+            an optional list of one or more blocks at which to report balances, defaults to 'latest'
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: blknum
+        - name: parts
+          description: control which state to export
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - none
+                - some
+                - all
+                - balance
+                - nonce
+                - code
+                - storage
+                - deployed
+                - accttype
+        - name: changes
+          description: only report a balance when it changes from one block to the next
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: noZero
+          description: suppress the display of zero balance accounts
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: call
+          description: a bang-separated string consisting of address!4-byte!bytes
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: string
+        - name: proxyFor
+          description: for the --call option only, redirects calls to this implementation
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: the on-chain state of a given address
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: "#/components/schemas/state"
+                        - $ref: "#/components/schemas/result"
+                example:
+                  {
+                    "data": [
+                      {
+                        "blockNumber": 13176226,
+                        "balance": 258843698360318500,
+                        "nonce": 115,
+                        "code": "0x",
+                        "storage": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "address": "0xa1e4380a3b1f749673e270229993ee55f35663b4",
+                        "deployed": 0,
+                        "accttype": "EOA",
+                        "ether": 0.2588436983603185
+                      }
+                    ]
+                  }
+        "400":
+          description: bad input parameter
+  /tokens:
+    get:
+      tags:
+        - Chain State
+      summary: Get token balance(s)
+      description: Retrieve token balance(s) for one or more addresses at given block(s).
+      operationId: chainstate-tokens
+      parameters:
+        - name: addrs
+          description: >
+            two or more addresses (0x...), the first is an ERC20 token, balances for the rest are reported
+          required: true
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            minItems: 2
+            items:
+              type: string
+              format: address
+        - name: blocks
+          description: >
+            an optional list of one or more blocks at which to report balances, defaults to 'latest'
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: blknum
+        - name: parts
+          description: which parts of the token information to retrieve
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - name
+                - symbol
+                - decimals
+                - totalSupply
+                - version
+                - none
+                - all
+        - name: byAcct
+          description: >
+            consider each address an ERC20 token except the last, whose balance is reported for each token
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: noZero
+          description: suppress the display of zero balance accounts
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: on-chain token related data for a give address at a given block height
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/token"
+                example:
+                  {
+                    "data": [
+                      {
+                        "holder": "0x2910543af39aba0cd09dbb2d50200b3e800a63d2",
+                        "balance": "624980000000000000",
+                        "address": "0xbb9bc244d798123fde783fcc1c72d3bb8c189413",
+                        "name": "The DAO Original",
+                        "decimals": 1,
+                        "isContract": true,
+                        "isErc20": true,
+                        "isErc721": true
+                      }
+                    ]
+                  }
+        "400":
+          description: bad input parameter
+  /status:
+    get:
+      tags:
+        - Admin
+      summary: Report status
+      description: Report on the status of the TrueBlocks system.
+      operationId: admin-status
+      parameters:
+        - name: modes
+          description: the type of status info to retrieve
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - index
+                - monitors
+                - collections
+                - names
+                - abis
+                - caches
+                - some
+                - all
+        - name: details
+          description: >
+            include details about items found in monitors, slurps, abis, or price caches
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: terse
+          description: show a terse summary report
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: This data model carries information about the TrueBlocks system including both the API server and the local binary caches
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/status"
+                example:
+                  {
+                    "data": [
+                      {
+                        "clientVersion": "erigon/2021.09.2/linux-amd64/go1.16.3",
+                        "trueblocksVersion": "GHC-TrueBlocks//0.12.1-alpha-7ac3196d7-20210903",
+                        "rpcProvider": "http://localhost:23456",
+                        "configPath": "~/Library/Application Support/TrueBlocks/",
+                        "cachePath": "~/Library/Application Support/TrueBlocks/cache/",
+                        "indexPath": "~/Library/Application Support/TrueBlocks/unchained/",
+                        "isTesting": false,
+                        "isDocker": false,
+                        "isArchive": true,
+                        "isTracing": true,
+                        "hasEskey": true,
+                        "hasPinkey": true,
+                        "date": "2021-09-03 19:38:19 UTC"
+                      }
+                    ]
+                  }
+        "400":
+          description: bad input parameter
+  /scrape:
+    get:
+      tags:
+        - Admin
+      summary: Scrape index
+      description: Scan the chain and update (and optionally pin) the TrueBlocks index of appearances.
+      operationId: admin-scrape
+      parameters:
+        - name: modes
+          description: which scraper(s) to control
+          required: true
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - indexer
+                - monitors
+                - both
+        - name: action
+          description: command to apply to the specified scrape
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: string
+            enum:
+              - toggle
+              - run
+              - restart
+              - pause
+              - quit
+        - name: sleep
+          description: seconds to sleep between scraper passes
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: number
+        - name: pin
+          description: >
+            pin chunks (and blooms) to IPFS as they are created (requires pinning service)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: publish
+          description: after pinning the chunk, publish it to UnchainedIndex
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: blockCnt
+          description: maximum number of blocks to process per pass
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: the IPFS hashes of the index chunk and its associated Bloom filter for the given block range
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: "#/components/schemas/pinnedChunk"
+                        - $ref: "#/components/schemas/manifest"
+        "400":
+          description: bad input parameter
+  /chunks:
+    get:
+      tags:
+        - Admin
+      summary: Manage chunks
+      description: Manage and investigate chunks and bloom filters.
+      operationId: admin-chunks
+      parameters:
+        - name: blocks
+          description: an optional list of blocks to process
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: blknum
+        - name: check
+          description: check the validity of the chunk or bloom
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: extract
+          description: show some or all of the contents of the chunk or bloom filters
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: string
+            enum:
+              - header
+              - addr_table
+              - app_table
+              - chunks
+              - blooms
+        - name: stats
+          description: for the --list option only, display statistics about each chunk or bloom
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: save
+          description: >
+            for the --extract option only, save the entire chunk to a similarly named file as well as display
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: the IPFS hashes of the index chunk and its associated Bloom filter for the given block range
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: "#/components/schemas/pinnedChunk"
+                        - $ref: "#/components/schemas/manifest"
+        "400":
+          description: bad input parameter
+  /init:
+    get:
+      tags:
+        - Admin
+      summary: Initialize index
+      description: Initialize the TrueBlocks system by downloading from IPFS.
+      operationId: admin-init
+      parameters:
+        - name: all
+          description: in addition to Bloom filters, download full index chunks
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: the IPFS hashes of the index chunk and its associated Bloom filter for the given block range
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: "#/components/schemas/pinnedChunk"
+                        - $ref: "#/components/schemas/manifest"
+        "400":
+          description: bad input parameter
+  /pins:
+    get:
+      tags:
+        - Admin
+      summary: Manage pins
+      description: Manage pinned index of appearances and associated blooms.
+      operationId: admin-pins
+      parameters:
+        - name: list
+          description: list the bloom and index hashes from local cache or IPFS
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: init
+          description: download the blooms or index chunks from IPFS
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: all
+          description: in addition to Bloom filters, download full index chunks
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: share
+          description: >
+            share downloaded data by pinning it to IPFS (the IPFS daemon must be running)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+        - name: sleep
+          description: throttle requests by this many seconds
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: the IPFS hashes of the index chunk and its associated Bloom filter for the given block range
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: "#/components/schemas/pinnedChunk"
+                        - $ref: "#/components/schemas/manifest"
+                example:
+                  {
+                    "data": [
+                      {
+                        "fileName": "000000000-000000000",
+                        "bloomHash": "QmbCQaYmfTR3sGNAvASoVjPynaY9UD31Hfxv7dGtzsptkb",
+                        "indexHash": "QmPmfSrYT5HDpfjj4uYSycaFECo9EqPSuADQ3YPbVp3yu4"
+                      },
+                      {
+                        "fileName": "000000001-000590501",
+                        "bloomHash": "QmSGuSQHgK4S9yiZQ3dKrykQVpLTmdFettY9sAwa537gPL",
+                        "indexHash": "QmSaoxc3XA9DEaA3inhLW5ZKsk5C5LWvowSXpHwVHsMjQp"
+                      },
+                      {
+                        "...": "..."
+                      }
+                    ]
+                  }
+        "400":
+          description: bad input parameter
+  /quotes:
+    get:
+      tags:
+        - Other
+      summary: Price quotes
+      description: Update or display Ethereum price data, this tool has been deprecated.
+      operationId: other-quotes
+      parameters:
+        - name: period
+          description: increment of display
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: string
+            enum:
+              - "5"
+              - "15"
+              - "30"
+              - "60"
+              - "120"
+              - "240"
+              - "1440"
+              - "10080"
+              - hourly
+              - daily
+              - weekly
+        - name: pair
+          description: which price pair to freshen or list (see Poloniex)
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: string
+        - name: feed
+          description: the feed for the price data
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: string
+            enum:
+              - poloniex
+              - maker
+              - tellor
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: the closing price of Ether in USD at a particular moment
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/quote"
+                example:
+                  {
+                    "data": [
+                      {
+                        "timestamp": 1439078400,
+                        "close": 1.4,
+                        "date": "2015-08-09 00:00:00 UTC"
+                      },
+                      {
+                        "timestamp": 1439085600,
+                        "close": 1.4,
+                        "date": "2015-08-09 02:00:00 UTC"
+                      }
+                    ]
+                  }
+        "400":
+          description: bad input parameter
+  /slurp:
+    get:
+      tags:
+        - Other
+      summary: Slurp Etherscan
+      description: Fetch data from EtherScan for any address.
+      operationId: other-slurp
+      parameters:
+        - name: addrs
+          description: one or more addresses to slurp from Etherscan
+          required: true
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: address
+        - name: blocks
+          description: an optional range of blocks to slurp
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: blknum
+        - name: types
+          description: which types of transactions to request
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - ext
+                - int
+                - token
+                - nfts
+                - miner
+                - uncles
+                - all
+        - name: appearances
+          description: show only the blocknumer.tx_id appearances of the exported transactions
+          required: false
+          style: form
+          in: query
+          explode: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: returns the requested data
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: the transaction data for a given transaction directly from the blockchain
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/transaction"
+                example:
+                  [
+                    {
+                      "hash": "0x2ec382949ba0b22443aa4cb38267b1fb5e68e188109ac11f7a82f67571a0adf3",
+                      "blockHash": "0xeab8fe9da0b41b2c003db620bb9adbedd5fcc7222cc50d53431aa1df47a20dda",
+                      "blockNumber": "46217",
+                      "transactionIndex": "0",
+                      "nonce": "0",
+                      "timestamp": "1438919451",
+                      "from": "0xc8ebccc5f5689fa8659d83713341e5ad19349448",
+                      "to": "0xc8ebccc5f5689fa8659d83713341e5ad19349448",
+                      "value": "0",
+                      "gas": "21000",
+                      "gasPrice": "65334370444",
+                      "maxFeePerGas": "0",
+                      "maxPriorityFeePerGas": "0",
+                      "input": "0x",
+                      "isError": "0",
+                      "hasToken": "0",
+                      "gasUsed": "21000",
+                      "date": "2015-08-07 03:50:51 UTC",
+                      "ether": "0.000000000000000000"
+                    }
+                  ]
+        "400":
+          description: bad input parameter
+components:
+  schemas:
+    monitor:
+      description: "A local file indicating a user's interest in an address. Includes caches for reconicilations, transactions and appearances as well as an optional association to named account"
+      type: object
+      properties:
+        nApps:
+          type: number
+          format: blknum
+          description: "the number of appearances for this monitor"
+        firstApp:
+          type: number
+          format: blknum
+          description: "the first block at which this address appears"
+        latestApp:
+          type: number
+          format: blknum
+          description: "the latest block at which this address appears"
+        sizeInBytes:
+          type: number
+          format: uint64
+          description: "the size of this monitor on disc"
+        tags:
+          type: string
+          description: "the tag given to this address"
+        address:
+          type: string
+          format: address
+          description: "the address being monitored"
+        name:
+          type: string
+          description: "the name given to this address"
+        isCustom:
+          type: boolean
+          description: "`true` if this address is customized"
+        symbol:
+          type: string
+        source:
+          type: string
+        decimals:
+          type: number
+        isContract:
+          type: boolean
+        isValid:
+          type: boolean
+        deleted:
+          type: boolean
+          description: "`true` if deleted, `false` otherwise"
+    appearance:
+      description: "a single appearance of an address anywhere in the chain in the form of blockNumber.transactionIndex"
+      type: object
+      properties:
+        blockNumber:
+          type: number
+          format: blknum
+          example: 10021
+          description: "the number of the block"
+        transactionIndex:
+          type: number
+          format: blknum
+          example: 305
+          description: "the zero-indexed position of the transaction in the block"
+        address:
+          type: string
+          format: address
+          description: "the address of the appearance"
+        name:
+          type: string
+          description: "the name of the address, if found"
+        timestamp:
+          type: number
+          format: timestamp
+          description: "the timestamp for this appearance"
+        date:
+          type: string
+          description: "the date represented by the timestamp"
+    reconciliation:
+      description: "a reconiciliation of all inflows and outflows to a given account at a given transaction"
+      type: object
+      properties:
+        blockNumber:
+          type: number
+          format: blknum
+          example: 10021
+          description: "the number of the block"
+        transactionIndex:
+          type: number
+          format: blknum
+          example: 305
+          description: "the zero-indexed position of the transaction in the block"
+        timestamp:
+          type: number
+          format: timestamp
+          example: 1438335038
+          description: "the Unix timestamp of the object"
+        assetAddr:
+          type: string
+          format: address
+          example: "0xf503...179b"
+          description: "the accountedFor address for ETH recons, the token address itself otherwise"
+        assetSymbol:
+          type: string
+          description: "either ETH, WEI or the symbol of the asset being reconciled as extracted from the chain"
+        decimals:
+          type: number
+          format: uint64
+          description: "Equivalent to the extracted value of getSymbol from ERC20 or, if ETH or WEI then 18"
+        prevBlk:
+          type: number
+          format: blknum
+          example: 10021
+          description: "the block number of the previous reconciliation"
+        prevBlkBal:
+          type: string
+          format: int256
+          description: "the account balance for the given asset for the previous reconciliation"
+        begBal:
+          type: string
+          format: int256
+          description: "the beginning balance of the asset at the blockNumber"
+        begBalDiff:
+          type: string
+          format: int256
+          description: "the difference between the expected beginning balance (prevBlkBal) and the queried balance from the chain"
+        amountIn:
+          type: string
+          format: int256
+          description: "the top-level value of the incoming transfer for the accountedFor address"
+        amountOut:
+          type: string
+          format: int256
+          description: "the amount (in terms of the asset) of regular outflow during this bigint"
+        internalIn:
+          type: string
+          format: int256
+          description: "the internal value of the incoming transfer for the accountedFor address"
+        internalOut:
+          type: string
+          format: int256
+          description: "the value of any internal value transfers out of the accountedFor account"
+        selfDestructIn:
+          type: string
+          format: int256
+          description: "the incoming value of a self-destruct if recipient is the accountedFor address"
+        selfDestructOut:
+          type: string
+          format: int256
+          description: "the value of the self-destructed value out if the accountedFor address was self-destructed"
+        minerBaseRewardIn:
+          type: string
+          format: int256
+          description: "the base fee reward if the miner is the accountedFor address"
+        minerNephewRewardIn:
+          type: string
+          format: int256
+          description: "the nephew reward if the miner is the accountedFor address"
+        minerTxFeeIn:
+          type: string
+          format: int256
+          description: "the transaction fee reward if the miner is the accountedFor address"
+        minerUncleRewardIn:
+          type: string
+          format: int256
+          description: "the uncle reward if the miner who won the uncle block is the accountedFor address"
+        prefundIn:
+          type: string
+          format: int256
+          description: "at block zero (0) only, the amount of genesis income for the accountedFor address"
+        spotPrice:
+          type: number
+          format: double
+          description: "The on-chain price in USD (or if a token in ETH, or zero) at the time of the transaction"
+        priceSource:
+          type: string
+          description: "The on-chain source from which the spot price was taken"
+        gasCostOut:
+          type: string
+          format: int256
+          description: "if the transactions original sender is the accountedFor address, the amount of gas expended denominated in WEI."
+        endBal:
+          type: string
+          format: int256
+          description: "the on-chain balance of the asset (see notes above about intra-block reconciliations)"
+        totalIn:
+          type: string
+          format: int256
+          description: "a calculated field -- the sum of all In fields"
+        totalOut:
+          type: string
+          format: int256
+          description: "a calculated field -- the sum of all Out fields"
+        totalOutLessGas:
+          type: string
+          format: int256
+        amountNet:
+          type: string
+          format: int256
+          description: "a calculated field -- totalIn - totalOut"
+        endBalCalc:
+          type: string
+          format: int256
+          description: "a calculated field -- begBal + amountNet"
+        reconciliationType:
+          type: string
+          description: "One of regular, traces, prevdiff-partial, partial-nextdiff, or `partial-partial`"
+        endBalDiff:
+          type: string
+          format: int256
+          description: "a calculated field -- endBal - endBalCalc, if non-zero, the reconciliation failed"
+        reconciled:
+          type: boolean
+          description: "a calculated field -- true if `endBal === endBalCalc` and `begBal === prevBlkBal`. `false` otherwise."
+    name:
+      description: "an association between a name and address for use throughout TrueBlocks"
+      type: object
+      properties:
+        tags:
+          type: string
+          example: "31-Gitcoin:Core"
+          description: "colon separated list of tags"
+        address:
+          type: string
+          format: address
+          example: "0xabea...fbef"
+          description: "the address associated with this name"
+        name:
+          type: string
+          example: "zkSync"
+          description: "the name associated with this address (retrieved from on-chain data if available)"
+        symbol:
+          type: string
+          example: "GTC"
+          description: "the symbol for this address (retrieved from on-chain data if available)"
+        source:
+          type: string
+          example: "On-chain"
+          description: "user supplied source of where this name was found (or on-chain if name is on-chain)"
+        decimals:
+          type: number
+          format: uint64
+          example: 18
+          description: "number of decimals retrieved from an ERC20 smart contract, defaults to 18"
+        description:
+          type: string
+          example: "any test"
+          description: "user supplied description for the address"
+        deleted:
+          type: boolean
+          description: "`true` if deleted, `false` otherwise"
+        isCustom:
+          type: boolean
+          description: "`true` if the address is a custom address, `false` otherwise"
+        isPrefund:
+          type: boolean
+          description: "`true` if the address was one of the prefund addresses, `false` otherwise"
+        isContract:
+          type: boolean
+          description: "`true` if the address is a smart contract, `false` otherwise"
+        isErc20:
+          type: boolean
+          description: "`true` if the address is an ERC20, `false` otherwise"
+        isErc721:
+          type: boolean
+          description: "`true` if the address is an ERC720, `false` otherwise"
+    block:
+      description: "block data directly from the blockchain"
+      type: object
+      properties:
+        gasLimit:
+          type: string
+          format: gas
+          example: "5000"
+          description: "the system-wide maximum amount of gas permitted in this block"
+        hash:
+          type: string
+          format: hash
+          example: "0xf128...1e98"
+          description: "the hash of the current block"
+        blockNumber:
+          type: number
+          format: blknum
+          example: 10021
+          description: "the number of the block"
+        parentHash:
+          type: string
+          format: hash
+          example: "0x66fc...31c9"
+          description: "hash of previous block"
+        miner:
+          type: string
+          format: address
+          example: "0xf927...2b13"
+          description: "Address of block's winning miner"
+        difficulty:
+          type: number
+          format: uint64
+          example: 598133194256
+          description: "the computational difficulty at this block"
+        timestamp:
+          type: number
+          format: timestamp
+          example: 1438335038
+          description: "the Unix timestamp of the object"
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/transaction"
+          description: "a possibly empty array of transactions or transaction hashes"
+        baseFeePerGas:
+          type: string
+          format: wei
+          example: "120911"
+          description: "the base fee for this block"
+        finalized:
+          type: boolean
+          example: true
+          description: "flag indicating the system considers this data final"
+        unclesCnt:
+          type: number
+    transaction:
+      description: "the transaction data for a given transaction directly from the blockchain"
+      type: object
+      properties:
+        hash:
+          type: string
+          format: hash
+          example: "0xf128...1e98"
+          description: "The hash of the transaction"
+        gasPrice:
+          type: string
+          format: gas
+          example: "63525836552"
+          description: "the number of wei per unit of gas the sender is willing to spend"
+        blockHash:
+          type: string
+          format: hash
+          example: "0xc421...fb04"
+          description: "The hash of the block containing this transaction"
+        blockNumber:
+          type: number
+          format: blknum
+          example: 10021
+          description: "the number of the block"
+        transactionIndex:
+          type: number
+          format: blknum
+          example: 305
+          description: "the zero-indexed position of the transaction in the block"
+        nonce:
+          type: number
+          format: uint64
+          example: 232
+          description: "sequence number of the transactions sent by the sender"
+        timestamp:
+          type: number
+          format: timestamp
+          example: 1438335038
+          description: "the Unix timestamp of the object"
+        from:
+          type: string
+          format: address
+          description: "address from which the transaction was sent"
+        to:
+          type: string
+          format: address
+          description: "address to which the transaction was sent"
+        value:
+          type: string
+          format: wei
+          example: "0"
+          description: "the amount of wei sent with this transactions"
+        gas:
+          type: string
+          format: gas
+          example: "158660"
+          description: "the maximum number of gas allowed for this transaction"
+        input:
+          type: string
+          format: bytes
+          example: "0x3d18b912"
+          description: "byte data either containing a message or funcational data for a smart contracts. See the --articulate"
+        receipt:
+          type: object
+          items:
+            $ref: "#/components/schemas/receipt"
+        statements:
+          type: array
+          items:
+            $ref: "#/components/schemas/reconciliation"
+          description: "array of reconciliations"
+        articulatedTx:
+          type: object
+          items:
+            $ref: "#/components/schemas/function"
+        compressedTx:
+          type: string
+          example: "0x3d18b912( )"
+          description: "truncated, more readable version of the articulation"
+        hasToken:
+          type: boolean
+          description: "`true` if the transaction is token related, `false` otherwise"
+        finalized:
+          type: boolean
+          example: true
+          description: "flag indicating the system considers this data final"
+        extraData:
+          type: string
+        isError:
+          type: boolean
+        date:
+          type: string
+    receipt:
+      description: "receipt data for a given transaction directly from the blockchain"
+      type: object
+      properties:
+        status:
+          type: number
+          format: uint32
+          description: "`1` on transaction suceess, `null` if tx preceeds Byzantium, `0` otherwise"
+        contractAddress:
+          type: string
+          format: address
+          description: "the address of the newly created contract, if any"
+        gasUsed:
+          type: string
+          format: gas
+          description: "the amount of gas actually used by the transaction"
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/log"
+          description: "a possibly empty array of logs"
+    log:
+      description: "log data for a given transaction directly from the blockchain"
+      type: object
+      properties:
+        blockNumber:
+          type: number
+          format: blknum
+          example: 10021
+          description: "the number of the block"
+        transactionIndex:
+          type: number
+          format: blknum
+          example: 305
+          description: "the zero-indexed position of the transaction in the block"
+        logIndex:
+          type: number
+          format: blknum
+          example: 354
+          description: "the zero-indexed position of this log relative to the block"
+        timestamp:
+          type: number
+          format: timestamp
+          description: "the timestamp of the block this log appears in"
+        address:
+          type: string
+          format: address
+          example: "0xf503...179b"
+          description: "the smart contract that emitted this log"
+        topics:
+          type: array
+          items:
+            $ref: "#/components/schemas/topic"
+          description: "The first topic hashes event signature of the log, up to 3 additional index parameters may appear"
+        data:
+          type: string
+          format: bytes
+          example: "0x0000...3ff6"
+          description: "any remaining un-indexed parameters to the event"
+        articulatedLog:
+          type: object
+          items:
+            $ref: "#/components/schemas/articulatedLog"
+          description: "data used when articulating log which is different than Function"
+        compressedLog:
+          type: string
+          example: "Transfer(0xcfa...9f54..."
+          description: "a truncated, more readable version of the articulation"
+    articulatedLog:
+      properties:
+        name:
+          type: string
+        inputs:
+          type: object
+          additionalProperties:
+            type: string
+    trace:
+      description: "trace data for a given transaction directly from the blockchain"
+      type: object
+      properties:
+        blockHash:
+          type: string
+          format: hash
+          example: "0xf128...1e98"
+          description: "The hash of the block containing this trace"
+        blockNumber:
+          type: number
+          format: blknum
+          example: 10021
+          description: "the number of the block"
+        transactionHash:
+          type: string
+          format: hash
+          description: "the transaction's hash containing this trace"
+        transactionIndex:
+          type: number
+          format: blknum
+          example: 305
+          description: "the zero-indexed position of the transaction in the block"
+        traceAddress:
+          type: array
+          items:
+            $ref: "#/components/schemas/string"
+          description: "a particular trace's address in the trace tree"
+        subtraces:
+          type: number
+          format: uint64
+          description: "the number of children traces that the trace hash"
+        type:
+          type: string
+          description: "the type of the trace"
+        action:
+          type: object
+          items:
+            $ref: "#/components/schemas/traceAction"
+          description: "the trace action for this trace"
+        result:
+          type: object
+          items:
+            $ref: "#/components/schemas/traceResult"
+          description: "the trace result of this trace"
+        articulatedTrace:
+          type: object
+          items:
+            $ref: "#/components/schemas/function"
+          description: "human readable version of the trace action input data"
+        compressedTrace:
+          type: string
+          description: "a compressed string version of the articulated trace"
+    traceAction:
+      description: "the trace action data for a given trace directly from the blockchain"
+      type: object
+      properties:
+        from:
+          type: string
+          format: address
+          description: "address from which the trace was sent"
+        to:
+          type: string
+          format: address
+          description: "address to which the trace was sent"
+        gas:
+          type: string
+          format: gas
+          example: "158660"
+          description: "the maximum number of gas allowed for this trace"
+        input:
+          type: string
+          format: bytes
+          description: "an encoded version of the function call"
+        callType:
+          type: string
+          description: "the type of call"
+        refundAddress:
+          type: string
+          format: address
+          example: "0xf503...179b"
+          description: "if the call type is self-destruct, the address to which the refund is sent"
+    traceResult:
+      description: "the trace result data for a given trace directly from the blockchain"
+      type: object
+      properties:
+        newContract:
+          type: string
+          format: address
+          example: "0xf503...179b"
+          description: "Address of new contract, if any"
+        code:
+          type: string
+          format: bytes
+          description: "if this trace is creating a new smart contract, the byte code of that contract"
+        gasUsed:
+          type: string
+          format: gas
+          description: "the amount of gas used by this trace"
+        output:
+          type: string
+          format: bytes
+          description: "the result of the call of this trace"
+    datedBlock:
+      description: "An indentified block named for convienience"
+      type: object
+      properties:
+        blockNumber:
+          type: number
+          format: blknum
+          example: 10021
+          description: "the number of the block"
+        timestamp:
+          type: number
+          format: timestamp
+          example: 1438335038
+          description: "the Unix timestamp of the block"
+        date:
+          type: string
+          format: date
+          example: "2015-07-30 15:34:53 UTC"
+          description: "Human readable version of timestamp"
+    state:
+      description: "the on-chain state of a given address"
+      type: object
+      properties:
+        blockNumber:
+          type: number
+          format: blknum
+          example: 10021
+          description: "the block number at which this state was taken"
+        balance:
+          type: string
+          format: wei
+          example: "258843698360318500"
+          description: "the balance at the address at the given block height"
+        nonce:
+          type: number
+          format: uint64
+          example: 115
+          description: "the nonce of the address at the given block height"
+        code:
+          type: string
+          format: bytes
+          example: "0x"
+          description: "the byte code at the address (if this is a smart contract)"
+        storage:
+          type: string
+          format: bytes
+          example: "0x0000...0000"
+          description: "this field is un-implemented and current returns the first storage location in a smart contract"
+        address:
+          type: string
+          format: address
+          example: "0xa1e4...63b4"
+          description: "the address of the state being queried"
+        deployed:
+          type: number
+          format: blknum
+          example: 8901011
+          description: "the block number at which this smart contract was deployed (if a smart contact)"
+        accttype:
+          type: string
+          example: "one of 'EOA' or 'Contract'"
+          description: "the type of the address at the given block"
+    result:
+      description: "the result of a call to a smart contract"
+      type: object
+      properties:
+        blockNumber:
+          type: number
+          format: blknum
+          example: 10021
+          description: "the block number at which this call was made"
+        address:
+          type: string
+          format: address
+          example: "0xa1e4...63b4"
+          description: "the address of contract being called"
+        signature:
+          type: string
+          description: "the canonical signature of the interface"
+        encoding:
+          type: string
+          description: "the encoding for the function call"
+        bytes:
+          type: string
+          description: "the bytes data following the encoding of the call"
+        callResult:
+          type: object
+          items:
+            $ref: "#/components/schemas/function"
+          description: "the result of the call to the contract"
+        compressedResult:
+          type: string
+          description: "the compressed version of the result of the call to the contract"
+        deployed:
+          type: number
+          format: blknum
+          example: 8901011
+          description: "the block number at which this smart contract was deployed (if a smart contact)"
+    token:
+      description: "on-chain token related data for a give address at a given block height"
+      type: object
+      properties:
+        holder:
+          type: string
+          format: address
+          example: "0x2910...63d2"
+          description: "the address for which we are reporting the token balance"
+        balance:
+          type: string
+          format: wei
+          example: "258843698360318500"
+          description: "the balance at the address at the given block height"
+        address:
+          type: string
+          format: address
+          example: "0xa1e4...63b4"
+          description: "description: the address of the token contract being queried"
+        name:
+          type: string
+          example: "The DAO Original"
+          description: "the name of the token contract, if available"
+        symbol:
+          type: string
+          example: "GTC"
+          description: "the symbol for this token contract"
+        decimals:
+          type: number
+          format: uint64
+          example: 18
+          description: "the number of decimals for the token contract"
+        isContract:
+          type: boolean
+          description: "`true` if the address is a smart contract, `false` otherwise"
+        isErc20:
+          type: boolean
+          description: "`true` if the address is an ERC20, `false` otherwise"
+        isErc721:
+          type: boolean
+          description: "`true` if the address is an ERC720, `false` otherwise"
+    status:
+      description: "This data model carries information about the TrueBlocks system including both the API server and the local binary caches"
+      type: object
+      properties:
+        clientVersion:
+          type: string
+          description: "the version string as reported by the rpcProvider"
+        clientIds:
+          type: string
+          description: "netword_id and chain_id from the rpcProvider"
+        trueblocksVersion:
+          type: string
+          description: "the TrueBlocks version string"
+        rpcProvider:
+          type: string
+          description: "the current rpcProvider"
+        configPath:
+          type: string
+          description: "the path to config files"
+        cachePath:
+          type: string
+          description: "the path to the local binary caches"
+        indexPath:
+          type: string
+          description: "the path to the local binary indexes"
+        host:
+          type: string
+          description: "the host portion of the local API server"
+        isTesting:
+          type: boolean
+          description: "`true` if the server is running in test mode"
+        isApi:
+          type: boolean
+          description: "`true` if the server is running in API mode"
+        isDocker:
+          type: boolean
+          description: "`true` if running under a docker image"
+        isScraping:
+          type: boolean
+          description: "`true` if the index scraper is running"
+        isArchive:
+          type: boolean
+          description: "`true` if the rpcProvider is an archive node"
+        isTracing:
+          type: boolean
+          description: "`true` if the rpcProvider provides Parity traces"
+        hasEskey:
+          type: boolean
+          description: "`true` if an EtherScan key is present"
+        hasPinkey:
+          type: boolean
+          description: "`true` if a Pinata API key is present"
+        ts:
+          type: number
+          format: timestamp
+          description: "the timestamp when this status data was produced"
+        caches:
+          type: array
+          items:
+            $ref: "#/components/schemas/cache"
+        chains:
+          type: array
+          items:
+            $ref: "#/components/schemas/chain"
+    cache:
+      description: "The cache data model carries information about the various local binary caches"
+      type: object
+      properties:
+        type:
+          type: string
+          description: "the type of the cache (one of the nine different types)"
+        path:
+          type: string
+          description: "the physical path to the cache on the hard drive"
+        nFiles:
+          type: number
+          format: uint64
+          description: "the number of files in the cache"
+        nFolders:
+          type: number
+          format: uint64
+          description: "the number of subfolders in the cache"
+        sizeInBytes:
+          type: number
+          format: uint64
+          description: "the size of the cache in bytes"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/cacheItem"
+    cacheItem:
+      description: "Cache content"
+      type: object
+      properties:
+        address:
+          type: string
+          format: address
+        name:
+          type: string
+    pinnedChunk:
+      description: "the IPFS hashes of the index chunk and its associated Bloom filter for the given block range"
+      type: object
+      properties:
+        fileName:
+          type: string
+          example: "013142464-013145212"
+          description: "for each chunk, the range of blocks contained in that chunk"
+        bloomHash:
+          type: ipfshash
+          example: "QmXHjjY...HDqvWT"
+          description: "the IPFS hash of the bloom filter at that range"
+        indexHash:
+          type: ipfshash
+          example: "QmTbYpR...qWLj44"
+          description: "the IPFS hash of the index chunk at that range"
+        firstApp:
+          type: number
+          format: blknum
+          description: "the first appearance in the chunk"
+        latestApp:
+          type: number
+          format: blknum
+          description: "the latest appearance in the chunk"
+    manifest:
+      description: "a manifest of the IPFS hashes created for the unchained index"
+      type: object
+      properties:
+        indexFormat:
+          type: string
+          description: "IPFS cid of file describing the file format of an index chunk"
+        bloomFormat:
+          type: string
+          description: "IPFS cid of file describing the associated bloom filter"
+        firstPin:
+          type: number
+          format: blknum
+          description: "the block number of the first pin in the manifest (always zero)"
+        lastPin:
+          type: number
+          format: blknum
+          description: "the most recent block included in this manifest"
+        pins:
+          type: array
+          items:
+            $ref: "#/components/schemas/pinnedChunk"
+          description: "a list of all the pins in the unchained index"
+    chain:
+      description: "The chain data model carries information about configured chains"
+      type: object
+      properties:
+        chain:
+          type: string
+          description: "The common name of the chain"
+        chainId:
+          type: number
+          format: uint64
+          description: "The chain id as reported by the RPC"
+        symbol:
+          type: string
+          description: "The symbol of the base currency on the chain"
+        rpcProvider:
+          type: string
+          description: "A valid RPC provider for the chain"
+        apiProvider:
+          type: string
+          description: "A valid API provider for the explorer"
+        remoteExplorer:
+          type: string
+          description: "A remote explorer for the chain such as EtherScan"
+        localExplorer:
+          type: string
+          description: "The local explorer for the chain (typically TrueBlocks Explorer)"
+        pinGateway:
+          type: string
+          description: "An IPFS gateway for pinning the index if enabled"
+    function:
+      description: "a human readable representation of a Solidity function call or event"
+      type: object
+      properties:
+        name:
+          type: string
+          description: "the name of the interface"
+        type:
+          type: string
+          description: "the type of the interface, either 'event' or 'function'"
+        signature:
+          type: string
+          description: "the canonical signature of the interface"
+        encoding:
+          type: string
+          description: "the signature encoded with keccak"
+        inputs:
+          type: array
+          items:
+            $ref: "#/components/schemas/parameter"
+          description: "the input parameters to the function, if any"
+        outputs:
+          type: array
+          items:
+            $ref: "#/components/schemas/parameter"
+          description: "the output parameters to the function, if any"
+    parameter:
+      description: "an input or output paramter to a function"
+      type: object
+      properties:
+        type:
+          type: string
+          description: "the type of this parameter"
+        name:
+          type: string
+          description: "the name of this parameter"
+        strDefault:
+          type: string
+          description: "the default value of this parameter, if any"
+        indexed:
+          type: boolean
+          description: "`true` if this parameter is indexed"
+        internalType:
+          type: string
+          description: "for composite types, the internal type of the parameter"
+        components:
+          type: array
+          items:
+            $ref: "#/components/schemas/parameter"
+          description: "for composite types, the parameters making up the composite"
+    quote:
+      description: "the closing price of Ether in USD at a particular moment"
+      type: object
+      properties:
+        timestamp:
+          type: number
+          format: timestamp
+          example: 1438270144
+          description: "the timestamp of this quote"
+        close:
+          type: number
+          format: double
+          example: 1240.10
+          description: "price of the asset in US dollars"
+        date:
+          type: string
+          format: date
+          example: "2018-09-30 01:15:17 UTC"
+          description: "the date of the associated timestamp"
+        name:
+          type: string
+          example: "Byzantium"
+          description: "the name of the block for some named 'special' blocks"
+    listStats:
+      description: "`list` statistics"
+      type: object
+      properties:
+        address:
+          type: string
+          format: address
+        nRecords:
+          type: number
+        fileSize:
+          type: number
+    response:
+      required:
+        - result
+      type: object
+      properties:
+        data:
+          type: object
+        error:
+          type: array
+          example:
+            - error 1
+            - error 2
+          items:
+            type: string
+    hash:
+      type: string
+      format: hash
+      description: "The 32-byte hash"
+      example: "0xf128...1e98"
+    string:
+      type: string
+    topic:
+      type: string
+      format: bytes
+      description: "One of four 32-byte topics of a log"
+      example: "0xf128...1e98"

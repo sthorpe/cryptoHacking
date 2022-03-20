@@ -1,0 +1,4 @@
+[settings]
+class = CPerson
+fields = person.csv
+includes = etherlib.h

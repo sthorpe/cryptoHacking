@@ -1,0 +1,4 @@
+[settings]
+class = CRPCResult
+fields = rpcresult.csv
+includes = utillib.h

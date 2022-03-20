@@ -1,0 +1,11 @@
+tomlTest2  acctExport.toml
+tests/acctExport.toml
+[version]
+current = "vers-alpha"
+
+[settings]
+# writeBlocks = false
+# writeTrxs = false
+# writeTraces = false
+# skipDdos = true
+# maxTraces = 250

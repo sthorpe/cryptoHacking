@@ -1,0 +1,9 @@
+#*accts*.txt
+shit*
+.DS_Store
+bin
+*.o
+proj.xcodeproj
+*.bin
+compare
+*.jsx

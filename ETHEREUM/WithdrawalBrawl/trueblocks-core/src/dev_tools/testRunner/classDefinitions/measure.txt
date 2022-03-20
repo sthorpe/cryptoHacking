@@ -1,0 +1,4 @@
+[settings]
+class = CMeasure
+fields = measure.csv
+includes = etherlib.h

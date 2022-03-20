@@ -1,0 +1,6 @@
+slurp?pink
+{
+  "errors": [
+    "Invalid key (pink) in slurp route."
+  ]
+}

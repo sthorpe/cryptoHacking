@@ -1,0 +1,4 @@
+[settings]
+class = CTraceFilter
+fields = tracefilter.csv
+includes = utillib.h

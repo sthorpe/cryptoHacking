@@ -1,0 +1,9 @@
+chifra when  1001001 --fmt api
+TEST[DATE|TIME] Blocks:  [1001001]
+TEST[DATE|TIME] Format:  api
+{"data": [
+  {
+    "blockNumber": 1001001,
+    "timestamp": 1455421883,
+    "date": "2016-02-14 03:51:23 UTC"
+  }], "meta": {"unripe": "0xdeadbeef","ripe": "0xdeadbeef","staging": "0xdeadbeef","finalized": "0xdeadbeef","client": "0xdeadbeef" } }

@@ -1,0 +1,10 @@
+[settings]
+class = CTrace
+fields = trace.csv
+includes = utillib.h|abi.h|traceaction.h|traceresult.h
+cpp_includes = transaction.h|node.h
+tsx = true
+doc_group = 02-Chain Data
+doc_descr = trace data for a given transaction directly from the blockchain
+doc_api = 14-trace
+doc_producer = traces, export

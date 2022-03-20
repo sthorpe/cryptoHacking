@@ -1,0 +1,8 @@
+[settings]
+class = CParameter
+fields = paramter.csv
+includes = utillib.h
+tsx = true
+doc_group = 05-Other
+doc_descr = an input or output paramter to a function
+doc_api = 41-parameter

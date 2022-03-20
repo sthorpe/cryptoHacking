@@ -1,0 +1,56 @@
+makeClass  --dump function --verbose
+TIME ~ CLOCK - <INFO>  : Processing 1 class definition files.
+{
+  "class_name": "CFunction",
+  "class_base": "Function",
+  "base_class": "CBaseNode",
+  "base_name": "Function",
+  "base_proper": "Function",
+  "base_lower": "function",
+  "base_upper": "FUNCTION",
+  "base_base": "Basenode",
+  "head_includes": "utillib.h|parameter.h",
+  "fieldArray": [
+    {
+      "type": "string",
+      "name": "name"
+    },
+    {
+      "type": "string",
+      "name": "type"
+    },
+    {
+      "type": "bool",
+      "name": "anonymous"
+    },
+    {
+      "type": "bool",
+      "name": "constant"
+    },
+    {
+      "type": "bool",
+      "name": "payable"
+    },
+    {
+      "type": "string",
+      "name": "signature"
+    },
+    {
+      "type": "string",
+      "name": "encoding"
+    },
+    {
+      "type": "CParameterArray",
+      "name": "inputs",
+      "is_array": true,
+      "is_object": true
+    },
+    {
+      "type": "CParameterArray",
+      "name": "outputs",
+      "is_array": true,
+      "is_object": true
+    }
+  ]
+}
+

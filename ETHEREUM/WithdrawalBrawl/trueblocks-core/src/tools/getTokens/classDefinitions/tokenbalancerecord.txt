@@ -1,0 +1,11 @@
+[settings]
+class = CTokenBalanceRecord
+base_class = CMonitor
+fields = tokenbalancerecord.csv
+includes = acctlib.h
+equals = address == it.address
+sort = v1.address < v2.address
+doc_group = 03-Chain State
+doc_descr = on-chain token related data for a give address at a given block height
+doc_api = 22-token
+doc_producer = tokens

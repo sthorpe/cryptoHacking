@@ -1,0 +1,4 @@
+[settings]
+class = CNewBlock
+fields = newblock.csv
+includes = etherlib.h|transaction.h

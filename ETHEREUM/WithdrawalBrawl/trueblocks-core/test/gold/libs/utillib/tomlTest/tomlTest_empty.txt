@@ -1,0 +1,24 @@
+tomlTest  empty.toml
+empty.toml
+[version]
+current = "vers-alpha"
+
+name: 		NONAME
+max_width: 	10000
+version: 		0.0.0
+
+File contents as read
+
+
+File contents after write
+[version]
+current = "vers-alpha"
+
+{
+	{ "thing1": "Value 1 with spaces" }
+	{ "thing2": "Value 2 with spaces" }
+}
+{
+	{ "thing1": "Value 1 with spaces" }
+	{ "thing2": "Value 2 with spaces" }
+}

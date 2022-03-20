@@ -1,0 +1,3 @@
+displayStrsTest  CAccountName
+------------------------------CAccountName------------------------------
+Unknown node of type CAccountName not created.

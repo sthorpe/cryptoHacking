@@ -1,0 +1,12 @@
+[settings]
+class = CReceipt
+fields = receipt.csv
+includes = utillib.h|abi.h|logentry.h
+cpp_includes = etherlib.h
+equals = (getValueByName("transactionHash") == it.getValueByName("transactionHash"))
+contained_by = Transaction
+tsx = true
+doc_group = 02-Chain Data
+doc_descr = receipt data for a given transaction directly from the blockchain
+doc_api = 12-receipt
+doc_producer = receipts, export

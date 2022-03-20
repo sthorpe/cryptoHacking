@@ -1,0 +1,6 @@
+pins?
+{
+  "errors": [
+    "Please choose at least one of --list or --init."
+  ]
+}

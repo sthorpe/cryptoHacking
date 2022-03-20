@@ -1,0 +1,4 @@
+[settings]
+class = CCachedAccount
+fields = cachedaccount.csv
+includes = etherlib.h

@@ -1,0 +1,17 @@
+openapi: 3.0.3
+info:
+  title: TrueBlocks API
+  contact:
+    email: info@trueblocks.io
+    url: https://www.trueblocks.io
+  license:
+    name: GPL 3.0
+    url: http://www.gnu.org/licenses/
+  version: [{VERSION}]
+  description: >
+[{DESCRIPTION}]servers:
+  - url: http://localhost:8080
+    description: Local endpoints
+tags:
+[{TAGS}]paths:
+[{PATHS}][{COMPONENTS}]

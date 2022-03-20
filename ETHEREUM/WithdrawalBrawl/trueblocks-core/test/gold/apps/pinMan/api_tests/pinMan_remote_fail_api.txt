@@ -1,0 +1,6 @@
+pins?list&remote&fmt=api
+{
+  "errors": [
+    "The --remote flag has been deprecated."
+  ]
+}

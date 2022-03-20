@@ -1,0 +1,11 @@
+SymbolCache.noindex
+.DS_Store
+
+chifra
+chifra-new
+makeClass
+testRunner
+
+# some visual studio stuff
+ModuleCache*
+proj

@@ -1,0 +1,11 @@
+[settings]
+class = CEthState
+fields = ethstate.csv
+includes = utillib.h|abi.h
+cpp_includes = etherlib.h
+sort = v1.blockNumber < v2.blockNumber
+equals = blockNumber == it.blockNumber
+doc_group = 03-Chain State
+doc_descr = the on-chain state of a given address
+doc_api = 20-state
+doc_producer = state

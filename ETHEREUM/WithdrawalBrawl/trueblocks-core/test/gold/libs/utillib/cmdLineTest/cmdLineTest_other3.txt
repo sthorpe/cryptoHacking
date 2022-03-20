@@ -1,0 +1,8 @@
+cmdLineTest  2 --bool 1 optionalMode --hiddenOption
+--------------------------------------------------------------------------------
+boolOption: 0
+boolSet: 1
+numOption: -1
+stringOption: Flipped by hidden option
+testNum: 0
+0. ret: 0
